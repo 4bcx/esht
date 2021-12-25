@@ -5,7 +5,7 @@
 
 # This script should not be sourced, make sure to change the string 'esht.sh'
 #   to match this file's name
-[ 'esht.sh' == $( basename "$0" ) ] || return 1
+[ 'esht.sh' = "$( basename ${0} )" ] || return 1
 
 SCRIPT=$( basename "$0" )
 VERSION="1.0.0"
@@ -54,17 +54,17 @@ script_main () {
 	ISIZE=$( wc -c "${INPUT_FILE}" | cut -f 1 -d ' ' )
 
 	od -v -c -w1 -Ad "${INPUT_FILE}" | while read -r INDEX ICHAR; do
-		if [ "${BLOCK}" == 'shell' ]; then
-			if [ "${ICHAR}" == '[' ]; then
+		if [ "${BLOCK}" = 'shell' ]; then
+			if [ "${ICHAR}" = '[' ]; then
 				STACK=$(( STACK + 1 ))
-			elif [ "${ICHAR}" == ']' ] && [ ${STACK} -eq 0 ]; then
+			elif [ "${ICHAR}" = ']' ] && [ ${STACK} -eq 0 ]; then
 				${write_output} '\n'
 				TRAIL=0
 				BLOCK=''
 				continue
-			elif [ "${ICHAR}" == ']' ] && [ ${STACK} -gt 0 ]; then
+			elif [ "${ICHAR}" = ']' ] && [ ${STACK} -gt 0 ]; then
 				STACK=$(( STACK - 1 ))
-			elif [ "${PCHAR}${ICHAR}" == '$[' ] && [ ${STACK} -eq 0 ]; then
+			elif [ "${PCHAR}${ICHAR}" = '$[' ] && [ ${STACK} -eq 0 ]; then
 				PCHAR='$['
 				continue
 			elif [ -z "${ICHAR}" ]; then
@@ -77,44 +77,44 @@ script_main () {
 
 			${write_output} "${ICHAR}"
 
-		elif [ "${BLOCK}" == 'print' ]; then
-			if [ "${ICHAR}" == '\' ]; then
+		elif [ "${BLOCK}" = 'print' ]; then
+			if [ "${ICHAR}" = '\' ]; then
 				PCHAR='\'
 				continue
-			elif [ "${PCHAR}${ICHAR}" == '\$' ]; then
+			elif [ "${PCHAR}${ICHAR}" = '\$' ]; then
 				PCHAR='\$'
 				continue
-			elif [ "${PCHAR}${ICHAR}" == '\$[' ]; then
+			elif [ "${PCHAR}${ICHAR}" = '\$[' ]; then
 				PCHAR='\'
 				ICHAR='$['
-			elif [ "${ICHAR}" == '$' ]; then
+			elif [ "${ICHAR}" = '$' ]; then
 				PCHAR='$'
 				continue
-			elif [ "${PCHAR}${ICHAR}" == '$[' ]; then
+			elif [ "${PCHAR}${ICHAR}" = '$[' ]; then
 				PCHAR='$['
-				${write_output} "\'\n"
+				${write_output} "'\n"
 				BLOCK='shell'
 				continue
 			fi
 
 			if [ ${INDEX} -eq ${ISIZE} ]; then
-				${write_output} "\'\n"
+				${write_output} "'\n"
 			else
 				${write_output} '%s' "${ICHAR:= }"
 			fi
 
 		else
-			if [ "${ICHAR}" == '$' ]; then
+			if [ "${ICHAR}" = '$' ]; then
 				PCHAR='$'
 				continue
-			elif [ "${PCHAR}${ICHAR}" == '$[' ]; then
+			elif [ "${PCHAR}${ICHAR}" = '$[' ]; then
 				PCHAR='$['
 				BLOCK='shell'
 				continue
 			else
 				BLOCK='print'
-				${write_output} "printf \'"
-				if [ "${PCHAR}" == '$' ]; then
+				${write_output} "printf '"
+				if [ "${PCHAR}" = '$' ]; then
 					${write_output} '$'
 				fi
 			fi
@@ -166,6 +166,6 @@ else
 	fi
 fi
 
-trap "print_error 'Interrupt signal detected, output may be incomplete'" SIGINT
+trap "print_error 'Interrupt signal detected, output may be incomplete'" INT
 
 script_main
