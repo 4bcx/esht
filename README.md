@@ -4,40 +4,77 @@ This is still way under development and verification, but the main idea here is 
 
 There are similar examples that but not quite the same like [bash-tbl](https://github.com/TekWizely/bash-tpl), [spp](https://github.com/radare/spp), [sempl](https://github.com/nextrevision/sempl), and another snippet I can't find right now.
 
-## Example
+## Usage & example
 
-Executing `. esht.sh` in the project directory produces the following output
+`esht.sh` requires one or more filenames as arguments, the first will be considered the source file. If a second filename is provided it will be considered as the output file and will be created, or overwritted if it already exists. If no output file specified, `esht.sh` will print to the standard output.
 
-```sh
-printf '
-'
- # define a user function
+Given a file `source.html.esht` with the following content:
+
+```html
+$[ # define a user function
    table_element() {
        echo "<td bgcolor=\"$1\">$1</td>"
     }
-   
-printf '
+   ]
 <html>
-<body>
+	<body>
 <table border=1><tr>
-'
- for a in Red Blue Yellow Cyan; do 
-printf '
-        '
- table_element $a 
-printf '
-        '
- done 
-printf '
+$[ for a in Red Blue Yellow Cyan; do ]
+        $[ table_element $a ]
+        $[ done ]
 </tr></table>
 </body>
 </html>
-'
+```
+
+Running `./esht.sh source.html.esht output.sh` will generate the file `output.sh` with the following code:
+
+```sh
+# define a user function
+   table_element() {
+       echo "<td bgcolor=\"$1\">$1</td>"
+    }
+
+printf '\n<html>\n\t<body>\n<table border=1><tr>\n'
+for a in Red Blue Yellow Cyan; do
+printf '\n        '
+table_element $a
+printf '\n        '
+done
+printf '\n</tr></table>\n</body>\n</html>\n'
+
+```
+
+Which in turn can be sourced by running `. output.sh` to get the html output:
+
+```html
+
+<html>
+	<body>
+<table border=1><tr>
+
+        <td bgcolor="Red">Red</td>
+
+        
+        <td bgcolor="Blue">Blue</td>
+
+        
+        <td bgcolor="Yellow">Yellow</td>
+
+        
+        <td bgcolor="Cyan">Cyan</td>
+
+        
+</tr></table>
+</body>
+</html>
+
 ```
 
 ## TODO
 
 - [x] Detect and remove unnecessary leading and trailing white spaces
-- [ ] Refactor and organize the existing code
+- [x] Refactor and organize the existing code
+- [x] Use trap to indicate incomplete output
 - [ ] Write more test inputs to detect edge cases
-- [ ] Write documentation
+- [ ] Write proper documentation
