@@ -1,72 +1,33 @@
-inside_code=false
-inside_print=false
-brackets_stack=0
+block=''
+pchar=''
+stack=0
+trail=0
 
-input_file='./example'
+input='./example'
+isize=$( wc -c "${input}" | cut -f 1 -d ' ' )
 
-input_size=$( wc -c "${input_file}" | cut -f 1 -d ' ' )
-input_index=0
-
-__newline__='
-'
-
-_getchars() {
-	index=${1:-0}
-	count=${2:-1}
-	dd if="${input_file}" bs=1 count=${count} skip=${index} 2> /dev/null
-}
-
-while [ ${input_index} -lt ${input_size} ]; do
-	char=$( _getchars ${input_index} )
-	if [ "${inside_print}" == 'true' ] && [ "${inside_code}" == 'false' ]; then
-		if [ "${char}" == '$' ]; then
-			char=$( _getchars ${input_index} 2 )
-			if [ "${char}" == '$[' ]; then
-				printf "\'\n"
-				inside_print=false
-				inside_code=true
-				input_index=$(( input_index + 1 ))
-			else
-				_getchars ${input_index} 2
-			fi
-		else
-			_getchars ${input_index}
-		fi
-	elif [ "${inside_print}" == 'false' ] && [ "${inside_code}" == 'true' ]; then
-		if [ "${char}" == '[' ]; then
-			brackets_stack=$(( brackets_stack + 1 ))
-		elif [ "${char}" == ']' ] && [ ${brackets_stack} -gt 0 ]; then
-			brackets_stack=$(( brackets_stack - 1 ))
-		elif [ "${char}" == ']' ] && [ ${brackets_stack} -eq 0 ]; then
-			printf "\nprintf \'"
-			inside_print=true
-			inside_code=false
-		else
-			_getchars ${input_index}
-		fi
+od -v -c -w1 -Ad "${input}" | while read -r index ichar; do
+	if [ "${block}" == 'shell' ]; then
+		[ "${ichar}" == '[' ] && stack=$(( stack + 1 ))
+		[ "${ichar}" == ']' ] && [ ${stack} -eq 0 ] && printf '\n' && trail=0 && block='' && continue
+		[ "${ichar}" == ']' ] && [ ${stack} -gt 0 ] && stack=$(( stack - 1 ))
+		[ "${pchar}${ichar}" == '$[' ] && [ ${stack} -eq 0 ] && pchar='$[' && continue
+		[ -z "${ichar}" ] && trail=$(( trail + 1 )) && continue
+		[ ${index} -lt ${isize} ] && printf "%${trail}s" && trail=0 && printf "${ichar:= }"
+	elif [ "${block}" == 'print' ]; then
+		[ "${ichar}" == '\' ] && pchar='\' && continue
+		[ "${pchar}${ichar}" == '\$' ] && pchar='\$' && continue
+		[ "${pchar}${ichar}" == '\$[' ] && pchar='\' && ichar='$['
+		[ "${ichar}" == '$' ] && pchar='$' && continue
+		[ "${pchar}${ichar}" == '$[' ] && pchar='$[' && printf "\'\n" && block='shell' && continue
+		[ ${index} -lt ${isize} ] && printf '%s' "${ichar:= }" || printf "\'\n"
 	else
-		if [ "${char}" == '$' ]; then
-			char=$( _getchars ${input_index} 2 )
-			if [ "${char}" == '$[' ]; then
-				inside_print=false
-				inside_code=true
-				input_index=$(( input_index + 1 ))
-			else
-				printf "printf \'"
-				_getchars ${input_index}
-				inside_print=true
-				inside_code=false
-			fi
-		else
-			printf "printf \'"
-			_getchars ${input_index}
-			inside_print=true
-			inside_code=false
-		fi
+		[ "${ichar}" == '$' ] && pchar='$' && continue
+		[ "${pchar}${ichar}" == '$[' ] && pchar='$[' && block='shell' && continue
+		block='print'
+		printf "printf \'"
+		[ "${pchar}" == '$' ] && printf '$'
+		printf '%s' "${ichar:= }"
 	fi
-	input_index=$(( input_index + 1 ))
+	pchar="${ichar}"
 done
-
-if [ "${inside_print}" == 'true' ] && [ "${inside_code}" == 'false' ]; then
-	printf "\'\n"
-fi

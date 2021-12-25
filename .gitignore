@@ -1,6 +1,7 @@
 # Created using gitignore.io
 secring.*
 .*.kate-swp
+.kateproject*
 .swp.*
 *~
 .fuse_hidden*

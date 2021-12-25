@@ -37,7 +37,7 @@ printf '
 
 ## TODO
 
-- [ ] Detect and remove unnecessary leading and trailing white spaces
+- [x] Detect and remove unnecessary leading and trailing white spaces
 - [ ] Refactor and organize the existing code
 - [ ] Write more test inputs to detect edge cases
 - [ ] Write documentation

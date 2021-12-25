@@ -5,7 +5,7 @@ $[ # define a user function
     }
    ]
 <html>
-<body>
+	<body>
 <table border=1><tr>
 $[ for a in Red Blue Yellow Cyan; do ]
         $[ table_element $a ]
