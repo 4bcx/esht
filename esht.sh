@@ -8,7 +8,7 @@
 [ 'esht.sh' = "$( basename ${0} )" ] || return 1
 
 SCRIPT=$( basename "$0" )
-VERSION="1.0.0"
+VERSION="1.0.1"
 URL="https://gitlab.com/4bcx/esht"
 
 print_help () {
