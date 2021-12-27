@@ -72,6 +72,7 @@ Which in turn can be sourced by running `. output.sh` to get the html output:
 - [x] Detect and remove unnecessary leading and trailing white spaces
 - [x] Refactor and organize the existing code
 - [x] Use trap to indicate incomplete output
+- [ ] Add `-x` option to automatically execute the generated script
 - [ ] Write more test inputs to detect edge cases
 - [ ] Write proper documentation
 
@@ -79,6 +80,7 @@ Which in turn can be sourced by running `. output.sh` to get the html output:
 - [CHANGELOG](./CHANGELOG.md) format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - And I try my best to follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+- [.gitignore](./.gitignore) was generated using [gitignore.io](https://www.toptal.com/developers/gitignore)
 
 ## License
 This project is licensed under [The Unlicense](./LICENSE)
