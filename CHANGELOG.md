@@ -3,6 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.1.0] - 2021-12-28
+### Added
+- Option `-x` to auto-run the generated script
+
+### Changed
+- Renamed the script to just `esht` without the `.sh`
+
 ## [1.0.1] - 2021-12-26
 ### Fixed
 - Issues with single quotes when using `dash` shell

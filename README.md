@@ -6,7 +6,7 @@ This is still way under development and verification, but the main idea here is 
 There are similar examples that but not quite the same like [bash-tbl](https://github.com/TekWizely/bash-tpl), [spp](https://github.com/radare/spp), [sempl](https://github.com/nextrevision/sempl), and another snippet I can't find right now.
 
 ## Usage & example
-`esht.sh` requires one or more filenames as arguments, the first will be considered the source file. If a second filename is provided it will be considered as the output file and will be created, or overwritted if it already exists. If no output file specified, `esht.sh` will print to the standard output.
+**esht** requires one or more filenames as arguments, the first will be considered the source file. If a second filename is provided it will be considered as the output file and will be created, or overwritted if it already exists. If no output file specified, **esht** will print to the standard output.
 
 Given a file `source.html.esht` with the following content:
 ```html
@@ -26,7 +26,7 @@ $[ for a in Red Blue Yellow Cyan; do ]
 </html>
 ```
 
-Running `./esht.sh source.html.esht output.sh` will generate the file `output.sh` with the following code:
+Running `./esht source.html.esht output.sh` will generate the file `output.sh` with the following code:
 ```sh
 # define a user function
    table_element() {
@@ -68,11 +68,14 @@ Which in turn can be sourced by running `. output.sh` to get the html output:
 
 ```
 
+The same result from above can can also be produced by using `-x` option.
+
 ## TODO
 - [x] Detect and remove unnecessary leading and trailing white spaces
 - [x] Refactor and organize the existing code
 - [x] Use trap to indicate incomplete output
-- [ ] Add `-x` option to automatically execute the generated script
+- [x] Add `-x` option to automatically execute the generated script
+- [ ] Add `-u` option to automatically update **esht**
 - [ ] Write more test inputs to detect edge cases
 - [ ] Write proper documentation
 
