@@ -6,15 +6,23 @@
 # This script should not be sourced, make sure to change the string 'esht'
 #   to match this file's name
 [ 'esht' = "$( basename ${0} )" ] || return 1
+if [ "ESHT_UPDATE" = 'true' ]; then
+	printf '%s updated successfully\n' "${0}"
+	unset ESHT_UPDATE
+	exit 0
+fi
 
 SCRIPT=$( basename "$0" )
-VERSION="1.1.0"
+VMAJOR=1
+VMINOR=0
+VPATCH=0
 HOMEPAGE="https://gitlab.com/4bcx/esht"
-SRC_URL="https://gitlab.com/4bcx/esht/-/raw/main/esht"
+SCRIPT_URL="https://gitlab.com/4bcx/esht/-/raw/dev/esht"
+VERSION_URL="https://gitlab.com/4bcx/esht/-/raw/dev/VERSION"
 
 print_help () {
 	cat << END_OF_HELP_TEXT
-"${SCRIPT}" v"${VERSION}"
+${SCRIPT} v${VMAJOR}.${VMINOR}.${VPATCH}
 Embeddable SHell Tags parser thingie
 Licensed under the The Unlicense.
 For more information, please refer to <https://unlicense.org>
@@ -28,13 +36,15 @@ Mandatory arguments to long options are mandatory for short options too.
   -v, --version                 print version and exit
   -x, --execute                 execute the output script instead of writing
                                 it to a file
+  -u, --update                  update ${SCRIPT}
 
 Project homepage: <"${HOMEPAGE}">
 END_OF_HELP_TEXT
 }
 
 print_version () {
-	printf '%s v%s\n' "${SCRIPT}" "${VERSION}"
+	VERSION="${VMAJOR}.${VMINOR}.${VPATCH}"
+	printf '%s Version %s\n' "${SCRIPT}" "${VERSION}"
 }
 
 print_error () {
@@ -42,12 +52,48 @@ print_error () {
 	printf '%s: %s\n' "${SCRIPT}" "${ERROR_MSG}" >&2
 }
 
-write_to_file() {
+write_to_file () {
 	printf "$@" >> "${OUTPUT_FILE}"
 }
 
-write_to_stdout() {
+write_to_stdout () {
 	printf "$@" >&1
+}
+
+script_update () {
+	UVERSION_FILE=$( mktemp )
+	wget -q -O ${UVERSION_FILE} ${VERSION_URL} 2> /dev/null
+	UMAJOR=$( cut -d . -f 1 ${UVERSION_FILE} )
+	UMINOR=$( cut -d . -f 2 ${UVERSION_FILE} )
+	UPATCH=$( cut -d . -f 3 ${UVERSION_FILE} )
+	rm ${UVERSION_FILE}
+
+	if [ ${UMAJOR} -gt ${VMAJOR} ] || [ ${UMAJOR} -eq ${VMAJOR} ] &&
+		[ ${UMINOR} -gt ${VMINOR} ] || [ ${UMAJOR} -eq ${VMAJOR} ] &&
+		[ ${UMINOR} -eq ${VMINOR} ] && [ ${UPATCH} -gt ${VPATCH} ]; then
+		if [ "${ESHT_UPDATE}" = 'true' ]; then
+			print_error 'Another update process is running'
+			exit 1
+		fi
+
+		export ESHT_UPDATE='true'
+		NEW_SCRIPT_FILE=$( mktemp )
+		UPDATER_SCRIPT=$( mktemp )
+		wget -q -O ${NEW_SCRIPT_FILE} ${SCRIPT_URL} 2> /dev/null
+
+		cat << END_OF_UPDATER_SCRIPT > ${UPDATER_SCRIPT}
+cp ${NEW_SCRIPT_FILE} ${0}
+rm -f ${NEW_SCRIPT_FILE}
+exec ${0}
+END_OF_UPDATER_SCRIPT
+
+		chmod +x ${NEW_SCRIPT_FILE}
+		chmod +x ${UPDATER_SCRIPT}
+
+		exec ${UPDATER_SCRIPT}
+	else
+		printf 'No newer version found\n'
+	fi
 }
 
 script_main () {
@@ -153,6 +199,10 @@ else
 			INPUT_FILE="${2}"
 			OUTPUT_FILE=$( mktemp )
 			SHEXE='true'
+			;;
+		-u|--update)
+			script_update
+			exit 0
 			;;
 		*)
 			INPUT_FILE="${1}"
