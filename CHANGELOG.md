@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Option `-u` to self-update the **esht**
 
 ## [1.1.0] - 2021-12-28
 ### Added
