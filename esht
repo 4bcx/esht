@@ -27,14 +27,13 @@ print_help () {
 	cat << END_OF_HELP_TEXT
 ${SCRIPT} v${VMAJOR}.${VMINOR}.${VPATCH}
 Embeddable SHell Tags parser thingie
-Licensed under the The Unlicense.
-For more information, please refer to <https://unlicense.org>
 
 Usage: ${SCRIPT} SOURCE [OUTPUT]
        ${SCRIPT} -x SOURCE
+       ${SCRIPT} -h | -v | -u
 Compile SOURCE into shell script OUTPUT or standard output.
 
-Mandatory arguments to long options are mandatory for short options too.
+Options:
   -h, --help                    display this help text and exit
   -v, --version                 print version and exit
   -x, --execute                 execute the output script instead of writing
@@ -185,11 +184,11 @@ INPUT_FILE=''
 
 if [ $# -eq 0 ]; then
 	print_error "Missing source filename"
-	print_help
+	print_help >&2
 	exit 5
 elif [ $# -gt 2 ]; then
 	print_error "${3}: Cannot use more than two arguments"
-	print_help
+	print_help >&2
 	exit 22
 else
 	case "${1}" in
