@@ -28,16 +28,16 @@ print_help () {
 ${SCRIPT} v${VMAJOR}.${VMINOR}.${VPATCH}
 Embeddable SHell Tags parser thingie
 
-Usage: ${SCRIPT} SOURCE [OUTPUT]
-       ${SCRIPT} -x SOURCE
+Usage: ${SCRIPT} [-x] [-e VAR=VALUE...] SOURCE [OUTPUT]
        ${SCRIPT} -h | -v | -u
 Compile SOURCE into shell script OUTPUT or standard output.
 
 Options:
   -h, --help                    display this help text and exit
   -v, --version                 print version and exit
-  -x, --execute                 execute the output script instead of writing
-                                it to a file
+  -x, --execute                 execute the output script
+  -e, --env KEY[=VALUE]...      add the definitions KEY=VALUE pairs
+                                to the start of the output script
   -u, --update                  update ${SCRIPT}
 
 Project homepage: <"${HOMEPAGE}">
@@ -52,14 +52,6 @@ print_version () {
 print_error () {
 	ERROR_MSG=${1:-Unknown error}
 	printf '%s: %s\n' "${SCRIPT}" "${ERROR_MSG}" >&2
-}
-
-write_to_file () {
-	printf "$@" >> "${OUTPUT_FILE}"
-}
-
-write_to_stdout () {
-	printf "$@" >&1
 }
 
 script_update () {
@@ -113,7 +105,7 @@ script_main () {
 			if [ "${ICHAR}" = '[' ]; then
 				STACK=$(( STACK + 1 ))
 			elif [ "${ICHAR}" = ']' ] && [ ${STACK} -eq 0 ]; then
-				${write_output} '\n'
+				printf '\n' >> "${OUTPUT_FILE}"
 				TRAIL=0
 				BLOCK=''
 				continue
@@ -126,11 +118,11 @@ script_main () {
 				TRAIL=$(( TRAIL + 1 ))
 				continue
 			elif [ -n "${ICHAR}" ] && [ ${TRAIL} -gt 0 ]; then
-				${write_output} "%${TRAIL}s"
+				printf "%${TRAIL}s" >> "${OUTPUT_FILE}"
 				TRAIL=0
 			fi
 
-			${write_output} "${ICHAR}"
+			printf "${ICHAR}" >> "${OUTPUT_FILE}"
 
 		elif [ "${BLOCK}" = 'print' ]; then
 			if [ "${ICHAR}" = '\' ]; then
@@ -147,15 +139,15 @@ script_main () {
 				continue
 			elif [ "${PCHAR}${ICHAR}" = '$[' ]; then
 				PCHAR='$['
-				${write_output} "'\n"
+				printf "'\n" >> "${OUTPUT_FILE}"
 				BLOCK='shell'
 				continue
 			fi
 
 			if [ ${INDEX} -eq ${ISIZE} ]; then
-				${write_output} "'\n"
+				printf "'\n" >> "${OUTPUT_FILE}"
 			else
-				${write_output} '%s' "${ICHAR:= }"
+				printf '%s' "${ICHAR:= }" >> "${OUTPUT_FILE}"
 			fi
 
 		else
@@ -168,72 +160,105 @@ script_main () {
 				continue
 			else
 				BLOCK='print'
-				${write_output} "printf '"
+				printf "printf '" >> "${OUTPUT_FILE}"
 				if [ "${PCHAR}" = '$' ]; then
-					${write_output} '$'
+					printf '$' >> "${OUTPUT_FILE}"
 				fi
 			fi
-			${write_output} '%s' "${ICHAR:= }"
+			printf '%s' "${ICHAR:= }" >> "${OUTPUT_FILE}"
 		fi
 		
 		PCHAR="${ICHAR}"
 	done
 }
 
-INPUT_FILE=''
+SHEXE='false'
+DEFKV='false'
+RMOUT='false'
 
 if [ $# -eq 0 ]; then
 	print_error "Missing source filename"
 	print_help >&2
 	exit 5
-elif [ $# -gt 2 ]; then
-	print_error "${3}: Cannot use more than two arguments"
-	print_help >&2
-	exit 22
 else
-	case "${1}" in
-		-h|--help)
-			print_help
-			exit 0
-			;;
-		-v|--version)
-			print_version
-			exit 0
-			;;
-		-x|--execute)
-			INPUT_FILE="${2}"
-			OUTPUT_FILE=$( mktemp )
-			SHEXE='true'
-			;;
-		-u|--update)
-			script_update
-			exit 0
-			;;
-		*)
-			INPUT_FILE="${1}"
-			if [ -n "${2}" ] && [ -f "${2}" ]; then
-				print_error "${2}: File exists and will be overwritten"
-				OUTPUT_FILE="${2}"
-			fi
-			if [ -f "${1}" ]; then
-				INPUT_FILE="${1}"
-			else
-				print_error "${1}: File cannot be opened or does not exist"
-				exit 2
-			fi
-	esac
+	while [ $# -gt 0 ]; do
+		case "${1}" in
+			-h|--help)
+				print_help
+				exit 0
+				;;
+			-v|--version)
+				print_version
+				exit 0
+				;;
+			-x|--execute)
+				SHEXE='true'
+				DEFKV='false'
+				;;
+			-e|--env)
+				DEFKV='true'
+				;;
+			-u|--update)
+				script_update
+				exit 0
+				;;
+			--)
+				DEFKV='false'
+				;;
+			-*)
+				print_error "${1}: Invalid argument"
+				print_help >&2
+				exit 22
+				;;
+			*)
+				if [ "${DEFKV}" = 'true' ]; then
+					KEY="${1%%=*}"
+					VALUE="${1#${KEY}}"
+					VALUE="${VALUE#=}"
+					SANE_KEY="$( printf '%s' ${KEY#[0-9]} \
+						| tr -dc [0-9a-zA-Z_] )"
+					if [ "${KEY}" = "${SANE_KEY}" ]; then
+						VARIABLES="${VARIABLES}${KEY}=\"${VALUE}\":"
+					else
+						print_error "${KEY}: Invalid argument"
+						print_help >&2
+						exit 22
+					fi
+				else
+					if [ -z "${INPUT_FILE}" ]; then
+						INPUT_FILE="${1}"
+					else
+						if [ -z "${OUTPUT_FILE}" ]; then
+							OUTPUT_FILE="${1}"
+						else
+							print_error "${1}: Too many files specified"
+							print_help >&2
+							exit 22
+						fi
+					fi
+				fi
+				;;
+		esac
+		shift
+	done
+fi
 
-	if [ ! -f "${INPUT_FILE}" ]; then
-		print_error "${INPUT_FILE}: File cannot be opened or does not exist"
-		exit 2
-	fi
-	if [ -n "${OUTPUT_FILE}" ]; then
-		: > "${OUTPUT_FILE}"
-		write_output='write_to_file'
-	else
-		write_output='write_to_stdout'
+if [ ! -f "${INPUT_FILE}" ]; then
+	print_error "${INPUT_FILE}: File cannot be opened or does not exist"
+	exit 2
+fi
+
+if [ -f "${OUTPUT_FILE}" ]; then
+	print_error "${2}: File exists and will be overwritten"
+else
+	if [ -z "${OUTPUT_FILE}" ]; then
+		OUTPUT_FILE=$( mktemp )
+		RMOUT='true'
 	fi
 fi
+
+printf '#!/bin/sh\n' > "${OUTPUT_FILE}"
+printf '%s' "${VARIABLES}" | tr ':' '\n' >> "${OUTPUT_FILE}"
 
 trap "print_error 'Interrupt signal detected, output may be incomplete'" INT
 
@@ -241,6 +266,12 @@ script_main
 
 if [ "${SHEXE}" = 'true' ]; then
 	chmod +x ${OUTPUT_FILE}
-	${OUTPUT_FILE}
-	rm ${OUTPUT_FILE}
+	$( realpath ${OUTPUT_FILE} )
+fi
+
+if [ "${RMOUT}" = 'true' ]; then
+	if [ "${SHEXE}" != 'true' ]; then
+		cat "${OUTPUT_FILE}"
+	fi
+	rm "${OUTPUT_FILE}"
 fi

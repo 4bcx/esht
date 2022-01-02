@@ -1,9 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.2.0] - 2022-01-02
 ### Added
 - Option `-u` to self-update the **esht**
+- Option `-e` to define variables in the output script
+
+## Changed
+- Removed licence details from help text
 
 ## [1.1.0] - 2021-12-28
 ### Added
