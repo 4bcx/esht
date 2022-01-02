@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2022-01-03
+### Added
+- Option `-m` to include some meta-data as variables in the output script
+
 ## [1.2.0] - 2022-01-02
 ### Added
 - Option `-u` to self-update the **esht**

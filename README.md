@@ -75,7 +75,9 @@ The same result from above can can also be produced by using `-x` option.
 - [x] Refactor and organize the existing code
 - [x] Use trap to indicate incomplete output
 - [x] Add `-x` option to automatically execute the generated script
-- [ ] Add `-u` option to automatically update **esht**
+- [x] Add `-u` option to automatically update **esht**
+- [x] Add `-e` option to include environmental variables
+- [x] Define some default variables for template name, dirname, parsing date,..
 - [ ] Write more test inputs to detect edge cases
 - [ ] Write proper documentation
 

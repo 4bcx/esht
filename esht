@@ -9,7 +9,7 @@
 
 SCRIPT=$( basename "$0" )
 VMAJOR=1
-VMINOR=2
+VMINOR=3
 VPATCH=0
 HOMEPAGE="https://gitlab.com/4bcx/esht"
 SCRIPT_URL="https://gitlab.com/4bcx/esht/-/raw/dev/esht"
@@ -38,6 +38,7 @@ Options:
   -x, --execute                 execute the output script
   -e, --env KEY[=VALUE]...      add the definitions KEY=VALUE pairs
                                 to the start of the output script
+  -m, --meta-data               add meta-data as variables to the output script
   -u, --update                  update ${SCRIPT}
 
 Project homepage: <"${HOMEPAGE}">
@@ -89,7 +90,7 @@ END_OF_UPDATER_SCRIPT
 
 		exec ${UPDATER_SCRIPT}
 	else
-		printf 'No newer version found\n'
+		printf 'Already up to date\n'
 	fi
 }
 
@@ -99,6 +100,21 @@ script_main () {
 	STACK=0
 	TRAIL=0
 	ISIZE=$( wc -c "${INPUT_FILE}" | cut -f 1 -d ' ' )
+	
+	printf '#!/bin/sh\n' > "${OUTPUT_FILE}"
+	if [ "${MMETA}" = 'true' ]; then
+		printf 'BASENAME="%s"\n' "$( basename ${INPUT_FILE} )" \
+			>> "${OUTPUT_FILE}"
+		printf 'DIRNAME="%s"\n' "$( dirname ${INPUT_FILE} )" \
+			>> "${OUTPUT_FILE}"
+		printf 'GENERATOR="%s"\n' "${SCRIPT}" \
+			>> "${OUTPUT_FILE}"
+		printf 'VERSION="%s"\n' "${VERSION}" \
+			>> "${OUTPUT_FILE}"
+		printf 'TIMESTAMP="%s"\n' "$( date -Iseconds )" \
+			>> "${OUTPUT_FILE}"
+	fi
+	printf '%s' "${VARIABLES}" | tr ':' '\n' >> "${OUTPUT_FILE}"
 
 	od -v -c -w1 -Ad "${INPUT_FILE}" | while read -r INDEX ICHAR; do
 		if [ "${BLOCK}" = 'shell' ]; then
@@ -170,11 +186,24 @@ script_main () {
 		
 		PCHAR="${ICHAR}"
 	done
+
+	if [ "${SHEXE}" = 'true' ]; then
+		chmod +x ${OUTPUT_FILE}
+		$( realpath ${OUTPUT_FILE} )
+	fi
+
+	if [ "${RMOUT}" = 'true' ]; then
+		if [ "${SHEXE}" != 'true' ]; then
+			cat "${OUTPUT_FILE}"
+		fi
+		rm "${OUTPUT_FILE}"
+	fi
 }
 
 SHEXE='false'
 DEFKV='false'
 RMOUT='false'
+MMETA='false'
 
 if [ $# -eq 0 ]; then
 	print_error "Missing source filename"
@@ -197,6 +226,10 @@ else
 				;;
 			-e|--env)
 				DEFKV='true'
+				;;
+			-m|--meta-data)
+				MMETA='true'
+				DEFKV='false'
 				;;
 			-u|--update)
 				script_update
@@ -257,21 +290,6 @@ else
 	fi
 fi
 
-printf '#!/bin/sh\n' > "${OUTPUT_FILE}"
-printf '%s' "${VARIABLES}" | tr ':' '\n' >> "${OUTPUT_FILE}"
-
 trap "print_error 'Interrupt signal detected, output may be incomplete'" INT
 
 script_main
-
-if [ "${SHEXE}" = 'true' ]; then
-	chmod +x ${OUTPUT_FILE}
-	$( realpath ${OUTPUT_FILE} )
-fi
-
-if [ "${RMOUT}" = 'true' ]; then
-	if [ "${SHEXE}" != 'true' ]; then
-		cat "${OUTPUT_FILE}"
-	fi
-	rm "${OUTPUT_FILE}"
-fi
