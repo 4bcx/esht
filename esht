@@ -167,7 +167,9 @@ script_main () {
 			fi
 
 		else
-			if [ "${ICHAR}" = '$' ]; then
+			if [ -z "${ICHAR}" ]; then
+				continue
+			elif [ "${ICHAR}" = '$' ]; then
 				PCHAR='$'
 				continue
 			elif [ "${PCHAR}${ICHAR}" = '$[' ]; then
