@@ -133,12 +133,14 @@ script_main () {
 			elif [ -z "${ICHAR}" ]; then
 				TRAIL=$(( TRAIL + 1 ))
 				continue
-			elif [ -n "${ICHAR}" ] && [ ${TRAIL} -gt 0 ]; then
+			fi
+
+			if [ -n "${ICHAR}" ] && [ ${TRAIL} -gt 0 ]; then
 				printf "%${TRAIL}s" >> "${OUTPUT_FILE}"
 				TRAIL=0
 			fi
 
-			printf "${ICHAR}" >> "${OUTPUT_FILE}"
+			printf '%s' "${ICHAR}" >> "${OUTPUT_FILE}"
 
 		elif [ "${BLOCK}" = 'print' ]; then
 			if [ "${ICHAR}" = '\' ]; then
