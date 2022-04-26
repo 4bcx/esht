@@ -133,6 +133,9 @@ script_main () {
 			elif [ -z "${ICHAR}" ]; then
 				TRAIL=$(( TRAIL + 1 ))
 				continue
+			elif [ "${ICHAR}" = '\n' ]; then
+				printf '\n' >> "${OUTPUT_FILE}"
+				continue
 			fi
 
 			if [ -n "${ICHAR}" ] && [ ${TRAIL} -gt 0 ]; then
