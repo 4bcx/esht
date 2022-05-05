@@ -10,7 +10,7 @@
 SCRIPT=$( basename "$0" )
 VMAJOR=1
 VMINOR=3
-VPATCH=0
+VPATCH=1
 HOMEPAGE="https://gitlab.com/4bcx/esht"
 SCRIPT_URL="https://gitlab.com/4bcx/esht/-/raw/dev/esht"
 VERSION_URL="https://gitlab.com/4bcx/esht/-/raw/dev/VERSION"

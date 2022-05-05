@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2022-05-05
+### Fixed
+- Issue with newlines inside code blocks
+- Shift in spaces inside code blocks
+- EOF error when ending the document with a code block
+
 ## [1.3.0] - 2022-01-03
 ### Added
 - Option `-m` to include some meta-data as variables in the output script
